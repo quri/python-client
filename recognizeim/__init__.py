@@ -6,20 +6,21 @@ import base64
 import json
 import hashlib
 import ast
-import Image
-import ImageDraw
+from PIL import Image, ImageDraw
 
 #limits for query images:
 #for SingleIR
-SINGLEIR_MAX_FILE_SIZE = 500    #KBytes
+SINGLEIR_MAX_FILE_SIZE = 2000    #KBytes
 SINGLEIR_MIN_DIMENSION = 100    #pix
 SINGLEIR_MIN_IMAGE_AREA = 0.05  #Mpix
 SINGLEIR_MAX_IMAGE_AREA = 0.31  #Mpix
 #for MultipleIR
-MULTIIR_MAX_FILE_SIZE = 3500    #KBytes
+MULTIIR_MAX_FILE_SIZE = 5000    #KBytes
 MULTIIR_MIN_DIMENSION = 100     #pix
 MULTIIR_MIN_IMAGE_AREA = 0.1    #Mpix
 MULTIIR_MAX_IMAGE_AREA = 5.1    #Mpix
+
+
 
 class CookieTransport(HTTPTransport):
   def call(self, addr, data, namespace, soapaction = None, encoding = None,
@@ -27,7 +28,7 @@ class CookieTransport(HTTPTransport):
 
     if not isinstance(addr, SOAPAddress):
       addr = SOAPAddress(addr, config)
-    
+
     cookie_cutter = ClientCookie.HTTPCookieProcessor(config.cookieJar)
     hh = ClientCookie.HTTPHandler()
 
@@ -39,7 +40,7 @@ class CookieTransport(HTTPTransport):
     opener.addheaders = [("Content-Type", t),
               ("Cookie", "Username=foobar"), # ClientCookie should handle
               ("SOAPAction" , "%s" % (soapaction))]
-              
+
     response = opener.open(addr.proto + "://" + addr.host + addr.path, data)
     data = response.read()
 
@@ -64,10 +65,10 @@ class recognizeApi(object):
   :type clapi_key: str.
   :returns: dict -- the server response.
   """
-  
+
   wsdl = "http://clapi.itraff.pl/wsdl"
   rest = "http://recognize.im/v2/recognize/"
-  
+
   Config.cookieJar = ClientCookie.MozillaCookieJar()
 
   def __init__(self, client_id, api_key, clapi_key):
@@ -76,7 +77,7 @@ class recognizeApi(object):
     self.api_key = api_key
     self._server = WSDL.Proxy(self.wsdl, transport = CookieTransport)
     result = self._server.auth(client_id, clapi_key, None)
-    
+
   def convertOutput(self, soap):
     """Converts SOAPpy.Types.structType to dict.
 
@@ -84,7 +85,7 @@ class recognizeApi(object):
     :type soap: SOAPpy.Types.structType.
     :returns: dict -- the server response converted to dict.
     """
-    
+
     d = {}
     if type(soap).__name__=='instance' and 'item' in soap._keys():
         soap = soap[0]
@@ -109,7 +110,7 @@ class recognizeApi(object):
     :type path: str.
     :returns: dict -- the server response.
     """
-    
+
     image = open(path, "rb").read()
     encoded = base64.b64encode(image)
     result = self._server.imageInsert(image_id, image_name, encoded);
@@ -118,11 +119,11 @@ class recognizeApi(object):
   def indexBuild(self):
     """You need to call indexBuild method in order to apply all your recent
     (from the previous call of this method) changes, including adding new images
-    and deleting images. 
+    and deleting images.
 
     :returns: dict -- the server response.
     """
-    
+
     result = self._server.indexBuild()
     return self.convertOutput(result)
 
@@ -135,7 +136,7 @@ class recognizeApi(object):
     :type callback_url: str.
     :returns: dict -- the server response.
     """
-    
+
     result = self._server.callback(callback_url)
     return self.convertOutput(result)
 
@@ -150,7 +151,7 @@ class recognizeApi(object):
     :type image_id: str.
     :returns: dict -- the server response.
     """
-    
+
     result = self._server.imageDelete(image_id)
     return self.convertOutput(result)
 
@@ -166,7 +167,7 @@ class recognizeApi(object):
     :type new_image_name: str.
     :returns: dict -- the server response.
     """
-    
+
     data = {"id": new_image_id,
             "name": new_image_name}
     result = self._server.imageUpdate(image_id, data)
@@ -178,7 +179,7 @@ class recognizeApi(object):
 
     :returns: dict -- the server response.
     """
-    
+
     result = self._server.indexStatus()
     return self.convertOutput(result)
 
@@ -190,7 +191,7 @@ class recognizeApi(object):
 
     :returns: dict -- the server response.
     """
-    
+
     result = self._server.userLimits()
     return self.convertOutput(result)
 
@@ -199,7 +200,7 @@ class recognizeApi(object):
 
     :returns: dict -- the server response.
     """
-    
+
     result = self._server.imageCount()
     return self.convertOutput(result)
 
@@ -210,7 +211,7 @@ class recognizeApi(object):
     :type image_id: str.
     :returns: dict -- the server response.
     """
-    
+
     result = self._server.imageGet(image_id)
     return self.convertOutput(result)
 
@@ -219,7 +220,7 @@ class recognizeApi(object):
 
     :returns: dict -- the server response.
     """
-    
+
     result = self._server.modeGet()
     return self.convertOutput(result)
 
@@ -228,18 +229,18 @@ class recognizeApi(object):
 
     :returns: dict -- the server response.
     """
-    
+
     result = self._server.modeChange(mode)
     return self.convertOutput(result)
 
-  def recognize(self, path, getAll=False, multi=False): 
+  def recognize(self, path, getAll=False, multi=False):
     """Sends image recognition request.
 
     :param path: Path to the image file.
     :type path: str.
     :returns: dict -- the server response.
     """
-    
+
     #fetch image data
     size = os.stat(path).st_size / 1024.0 #KB
     image = Image.open(path)
@@ -271,9 +272,9 @@ class recognizeApi(object):
     if (getAll):
       url += 'all/'
     url += self.client_id
-    
+
     imageData = open(path, "rb").read()
-    
+
     m = hashlib.md5()
     m.update(self.api_key)
     m.update(imageData)
@@ -310,5 +311,3 @@ class recognizeApi(object):
       return image
     else:
       return None
-    
-    

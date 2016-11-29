@@ -5,7 +5,7 @@ setup(
     version='0.1',
     author='Michal Czyzycki',
     packages=['recognizeim', 'SOAPpy','SOAPpy/wstools'],
-    install_requires=['ClientCookie', 'fpconst', 'PIL'],
+    install_requires=['ClientCookie', 'fpconst', 'Pillow'],
     description='Recognize.im Api.',
     long_description=open('README.md').read(),
 )
