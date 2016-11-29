@@ -19,8 +19,11 @@ MULTIIR_MAX_FILE_SIZE = 5000    #KBytes
 MULTIIR_MIN_DIMENSION = 100     #pix
 MULTIIR_MIN_IMAGE_AREA = 0.1    #Mpix
 MULTIIR_MAX_IMAGE_AREA = 5.1    #Mpix
-
-
+#for ShelfIR
+SHELFIR_MAX_FILE_SIZE = 15000   #KBytes
+SHELFIR_MIN_DIMENSION = 100     #pix
+SHELFIR_MIN_IMAGE_AREA = 0.1    #Mpix
+SHELFIR_MAX_IMAGE_AREA = 25     #Mpix
 
 class CookieTransport(HTTPTransport):
   def call(self, addr, data, namespace, soapaction = None, encoding = None,
@@ -233,7 +236,7 @@ class recognizeApi(object):
     result = self._server.modeChange(mode)
     return self.convertOutput(result)
 
-  def recognize(self, path, getAll=False, multi=False):
+  def recognize(self, path, getAll=False, multi=False, shelf=False):
     """Sends image recognition request.
 
     :param path: Path to the image file.
@@ -255,6 +258,13 @@ class recognizeApi(object):
           area < MULTIIR_MIN_IMAGE_AREA or
           area > MULTIIR_MAX_IMAGE_AREA):
         return "Image does not meet the requirements of multi mode query image.\n"
+    elif (shelf):
+      if (size > SHELFIR_MAX_FILE_SIZE or
+          width < SHELFIR_MIN_DIMENSION or
+          height < SHELFIR_MIN_DIMENSION or
+          area < SHELFIR_MIN_IMAGE_AREA or
+          area > SHELFIR_MAX_IMAGE_AREA):
+        return "Image does not meet the requirements of shelf mode query image.\n"
     else:
       if (size > SINGLEIR_MAX_FILE_SIZE or
           width < SINGLEIR_MIN_DIMENSION or
@@ -267,6 +277,8 @@ class recognizeApi(object):
     url = self.rest
     if (multi):
       url += 'multi/'
+  elif (shelf):
+      url += 'shelf/'
     else:
       url += 'single/'
     if (getAll):
