@@ -277,7 +277,7 @@ class recognizeApi(object):
     url = self.rest
     if (multi):
       url += 'multi/'
-  elif (shelf):
+    elif (shelf):
       url += 'shelf/'
     else:
       url += 'single/'
